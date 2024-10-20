@@ -1,4 +1,4 @@
-local cfg = Config.Settings
+local cfg = Config
 
 if not Config then
     print("Config not found. Please ensure the config.lua is loaded.")
