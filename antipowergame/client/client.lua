@@ -5,25 +5,27 @@ Citizen.CreateThread(function()
         Citizen.Wait(cfg.WaitTime)
         local veh = GetVehiclePedIsIn(PlayerPedId())
 
-        if veh ~= 0 then
+        if veh ~= 0 and DoesEntityExist(veh) then
             local vehclass = GetVehicleClass(veh)
 
             if isInArray(cfg.VehClass.Offroad, vehclass) then
-                Citizen.Wait(4500) -- Wait longer for off-road vehicles
+                Citizen.Wait(4500)
             else
                 handleVehicleGrip(veh, vehclass)
             end
         else
-            Citizen.Wait(1200) -- No vehicle, wait longer
+            Citizen.Wait(1200)
         end
     end
 end)
 
 function handleVehicleGrip(veh, vehclass)
+    if not DoesEntityExist(veh) then return end
+
     local material_id = GetVehicleWheelSurfaceMaterial(veh, 1)
     
-    if isInArray(cfg.Materials.OffRoad, material_id) then
-        SetVehicleReduceGrip(veh, false) -- On road
+    if material_id and isInArray(cfg.Materials.OffRoad, material_id) then
+        SetVehicleReduceGrip(veh, false)
         SetVehicleBurnout(veh, 0)
         Citizen.Wait(350)
     else
@@ -33,15 +35,16 @@ function handleVehicleGrip(veh, vehclass)
 end
 
 function adjustGripBasedOnRotation(veh)
+    if not DoesEntityExist(veh) then return end
+
     local wheel_type = GetVehicleWheelType(veh)
     local rot = GetEntityRotation(veh, 5)
-    local offroadY = cfg.Settings.OffroadRotationY
-    local normalY = cfg.Settings.NormalRotationY
-    local offroadYl = cfg.Settings.OffroadRotationYl
-    local normalYl = cfg.Settings.NormalRotationYl
+    local offroadY = cfg.OffroadRotationY
+    local normalY = cfg.NormalRotationY
+    local offroadYl = cfg.OffroadRotationYl
+    local normalYl = cfg.NormalRotationYl
 
-    if (wheel_type == 4 and (rot.y >= offroadY or rot.x >= offroadY) or 
-        (rot.y < offroadYl or rot.x < offroadYl)) then
+    if wheel_type == 4 and ((rot.y >= offroadY or rot.x >= offroadY) or (rot.y < offroadYl or rot.x < offroadYl)) then
         SetVehicleReduceGrip(veh, true)
     else
         SetVehicleReduceGrip(veh, false)
@@ -57,14 +60,16 @@ function supercarsStop(veh, vehclass)
 end
 
 function handleSuperCarBurnout(veh)
+    if not DoesEntityExist(veh) then return end 
+
     local ratas = getWheelMaterials(veh)
     
     if areAllWheelsValid(ratas) then
         SetVehicleBurnout(veh, 1)
         local speed = GetEntitySpeed(veh) * 3.6
         
-        if speed > cfg.Settings.SpeedThresholdSuperCar then
-            adjustEngineHealth(veh, cfg.Settings.EngineHealthDecreaseSuperCar)
+        if speed > cfg.SpeedThresholdSuperCar then
+            adjustEngineHealth(veh, cfg.EngineHealthDecreaseSuperCar)
         end
     else
         SetVehicleBurnout(veh, 0)
@@ -72,18 +77,22 @@ function handleSuperCarBurnout(veh)
 end
 
 function handleOtherVehicles(veh)
+    if not DoesEntityExist(veh) then return end
+
     local ratas = getWheelMaterials(veh)
     
     if not IsEntityInAir(veh) and areAllWheelsValid(ratas) then
         local speed = GetEntitySpeed(veh) * 3.6
         
-        if speed > cfg.Settings.SpeedThresholdOther then
-            adjustEngineHealth(veh, cfg.Settings.EngineHealthDecreaseOther)
+        if speed > cfg.SpeedThresholdOther then
+            adjustEngineHealth(veh, cfg.EngineHealthDecreaseOther)
         end
     end
 end
 
 function adjustEngineHealth(veh, decrease)
+    if not DoesEntityExist(veh) then return end 
+
     local health = GetVehicleEngineHealth(veh) - decrease
     if health > 265 then
         SetVehicleEngineHealth(veh, health)
@@ -92,8 +101,13 @@ end
 
 function getWheelMaterials(veh)
     local materials = {}
+    if not DoesEntityExist(veh) then return materials end
+
     for i = 0, 5 do
-        table.insert(materials, GetVehicleWheelSurfaceMaterial(veh, i))
+        local material = GetVehicleWheelSurfaceMaterial(veh, i)
+        if material then
+            table.insert(materials, material)
+        end
     end
     return materials
 end
@@ -118,11 +132,11 @@ end
 
 Citizen.CreateThread(function()
     while true do
-        Citizen.Wait(cfg.Settings.AirCheckWaitTime)
+        Citizen.Wait(cfg.AirCheckWaitTime)
         local veh = GetVehiclePedIsIn(PlayerPedId())
         
-        if veh ~= 0 then
-            getWheelMaterials(veh) -- Ensure we gather wheel materials periodically
+        if veh ~= 0 and DoesEntityExist(veh) then
+            getWheelMaterials(veh)
         end
     end
 end)
