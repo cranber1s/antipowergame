@@ -1,5 +1,7 @@
 Config = {}
 
+Config.EnableVehicleControl = true  -- Set this to false to disable the vehicle control script (Avoids controlling the car in the air and when it is on the roof)
+
 Config.VehClass = {
     Offroad = {14, 15, 16, 21}, -- Vehicle classes considered as off-road vehicles
     SuperCars = {7}, -- Vehicle class for supercars
