@@ -1,5 +1,33 @@
 local cfg = Config.Settings
 
+if not Config then
+    print("Config not found. Please ensure the config.lua is loaded.")
+    return
+end
+CreateThread(function()
+    while true do
+        local sleep = 1000
+        local ped = PlayerPedId()
+        local vehicle = GetVehiclePedIsIn(ped, false)
+            
+        if Config.EnableVehicleControl then
+            if vehicle ~= 0 then
+                local model = GetEntityModel(vehicle)
+                local roll = GetEntityRoll(vehicle)
+                    
+                if (IsThisModelACar(model) and IsEntityInAir(vehicle)) or (roll < -75 or roll > 75) then
+                    sleep = 0 
+                    DisableControlAction(0, 59) 
+                    DisableControlAction(0, 60)
+                end
+            end
+        end
+
+        Wait(sleep)
+    end
+end)
+
+
 Citizen.CreateThread(function()
     while true do
         Citizen.Wait(cfg.WaitTime)
