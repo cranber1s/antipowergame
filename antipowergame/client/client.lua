@@ -1,4 +1,7 @@
 local cfg = Config
+local damageScale = Config.VehicleDamage.DamageScale
+local tireBurstTriggered = false
+local smokeEffectTriggered = false
 
 if not Config then
     print("Config not found. Please ensure the config.lua is loaded.")
@@ -168,3 +171,65 @@ Citizen.CreateThread(function()
         end
     end
 end)
+
+local function getDamageThreshold(scale)
+    return 1000 - (scale * 90)
+end
+
+local function canBurstTire(engineHealth)
+    if not Config.VehicleDamage.EnableTireBurst then return false end
+    local tireBurstThreshold = getDamageThreshold(damageScale)
+    return engineHealth < tireBurstThreshold and math.random(1, 100) <= Config.VehicleDamage.BurstChance
+end
+
+Citizen.CreateThread(function()
+    while true do
+        Citizen.Wait(1000)
+
+        local playerPed = PlayerPedId()
+        if IsPedInAnyVehicle(playerPed, false) and Config.VehicleDamage.Enable then
+            local vehicle = GetVehiclePedIsIn(playerPed, false)
+            local engineHealth = GetVehicleEngineHealth(vehicle)
+            local damageThreshold = getDamageThreshold(damageScale)
+
+            if engineHealth < damageThreshold and not smokeEffectTriggered then
+                StartVehicleSmokeEffect(vehicle)
+                SetVehicleEnginePerformance(vehicle)
+                smokeEffectTriggered = true
+            elseif engineHealth >= damageThreshold and smokeEffectTriggered then
+                smokeEffectTriggered = false
+            end
+
+            if HasEntityCollidedWithAnything(vehicle) and not tireBurstTriggered then
+                if canBurstTire(engineHealth) then
+                    BurstVehicleTire(vehicle)
+                    tireBurstTriggered = true
+                end
+            elseif not HasEntityCollidedWithAnything(vehicle) then
+                tireBurstTriggered = false
+            end
+        end
+    end
+end)
+
+function StartVehicleSmokeEffect(vehicle)
+    SetVehicleEngineOn(vehicle, true, true, false)
+    SetVehicleEngineHealth(vehicle, getDamageThreshold(damageScale) - 50)
+end
+
+function SetVehicleEnginePerformance(vehicle)
+    local currentSpeed = GetEntitySpeed(vehicle)
+    local reducedSpeed = currentSpeed * 0.75
+    SetVehicleForwardSpeed(vehicle, reducedSpeed)
+end
+
+function BurstVehicleTire(vehicle)
+
+    local tireIndex = math.random(0, 5)
+    if tireIndex == 2 or tireIndex == 3 then
+        tireIndex = 4 
+    end
+
+    SetVehicleTyreBurst(vehicle, tireIndex, true, 1000.0)
+    print("Bursting tire:", tireIndex)
+end
