@@ -2,6 +2,15 @@ Config = {}
 
 Config.EnableVehicleControl = true  -- Set this to false to disable the vehicle control script (Avoids controlling the car in the air and when it is on the roof)
 
+Config = {
+    VehicleDamage = {
+        Enable = true,              -- Set to 'true' to enable vehicle damage effects. Set to 'false' to disable all damage-related functionalities.
+        DamageScale = 1,            -- Scale for damage effects, ranging from 1 (least damage) to 10 (most damage).This determines how severely the vehicle is affected by damage. Higher values will trigger effects sooner.
+        EnableTireBurst = true,     -- Set to 'true' to enable the functionality of bursting tires upon collision. If set to 'false', tire bursting will not occur, regardless of collision.
+        BurstChance = 20,           -- The probability (in percentage) of a tire bursting when a collision occurs. A value from 1 to 100, where higher values increase the likelihood of a tire burst after a collision is detected.
+    },
+}
+
 Config.VehClass = {
     Offroad = {14, 15, 16, 21}, -- Vehicle classes considered as off-road vehicles
     SuperCars = {7}, -- Vehicle class for supercars
